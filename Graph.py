@@ -121,7 +121,7 @@ def isFileH(nodeNum):
 def getPieceChar(nodeNum, cleaned_graph_str):
   return cleaned_graph_str[nodeNum]
 
-def create_graph(graph, out, board):
+def create_graph(graph, board):
   for node in range(288):
 
     # iterate through all neighbors
@@ -135,17 +135,17 @@ def create_graph(graph, out, board):
     isA = isFileA(current_node)
     isH = isFileH(current_node)
 
-    out = out[::-1]
+    #out = out[::-1]
     ## INDIVIDUALLY GO THROUGH THE 8 POSSIBLE NEIGHBOR SQUARES AND ASSIGN EDGES
     ## MUST CHECK IF THE NODE HAS A PEICE ON IT> IF IT DOES THEN MAKE THE EDGE HAVE MASSIVE WEIGHT
     # top rank : a file
     if(not (isTop or isA)):
 
       neighbor_node_num = current_node + 17 - 1
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.70716)
       else:
-        if((neighbor_node_num // 17 % 2 == 0) ^ (neighbor_node_num % 17 % 2 == 0 )):
+        if((current_node // 17 % 2 == 0) ^ (current_node % 17 % 2 == 0 )):
           graph.add_edge(current_node, neighbor_node_num, 10)
         else:
           graph.add_edge(current_node, neighbor_node_num, 0.707106)
@@ -154,7 +154,7 @@ def create_graph(graph, out, board):
     if(not isTop):
       neighbor_node_num = current_node + 17
       #print(f"Adding Edge top : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.5)
       else:
         graph.add_edge(current_node, neighbor_node_num, 0.5)
@@ -164,10 +164,10 @@ def create_graph(graph, out, board):
       #if current_node !=16:
       neighbor_node_num = current_node + 17 + 1
       #print(f"Adding Edge topright : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.707106)
       else:
-        if((neighbor_node_num // 17 % 2 == 0) ^ (neighbor_node_num % 17 % 2 == 0 )):
+        if((current_node // 17 % 2 == 0) ^ (current_node % 17 % 2 == 0 )):
           graph.add_edge(current_node, neighbor_node_num, 10)
         else:
           graph.add_edge(current_node, neighbor_node_num, 0.707106)
@@ -176,7 +176,7 @@ def create_graph(graph, out, board):
     if(not isH):
       neighbor_node_num = current_node + 1
       #print(f"Adding Edge right: [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.5)
       else:
         graph.add_edge(current_node, neighbor_node_num, 0.5)
@@ -186,10 +186,10 @@ def create_graph(graph, out, board):
       
       neighbor_node_num = current_node - 17 + 1
       #print(f"Adding Edge bottomright : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.707)
       else:
-        if((neighbor_node_num // 17 % 2 == 0) ^ (neighbor_node_num % 17 % 2 == 0 )):
+        if((current_node // 17 % 2 == 0) ^ (current_node % 17 % 2 == 0 )):
           graph.add_edge(current_node, neighbor_node_num, 10)
         else:
           graph.add_edge(current_node, neighbor_node_num, 0.707106)
@@ -198,7 +198,7 @@ def create_graph(graph, out, board):
     if(not isBottom):
       neighbor_node_num = current_node - 17
       #print(f"Adding Edge bottom : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.5)
       else:
         graph.add_edge(current_node, neighbor_node_num, 0.5)
@@ -207,10 +207,10 @@ def create_graph(graph, out, board):
     if(not (isBottom or isA)):
       neighbor_node_num = current_node - 17 - 1
       #print(f"Adding Edge bottomleft : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.707101)
       else:
-        if((neighbor_node_num // 17 % 2 == 0) ^ (neighbor_node_num % 17 % 2 == 0) ):
+        if((current_node // 17 % 2 == 0) ^ (current_node % 17 % 2 == 0) ):
           graph.add_edge(current_node, neighbor_node_num, 10)
         else:
           graph.add_edge(current_node, neighbor_node_num, 0.707106)
@@ -219,7 +219,7 @@ def create_graph(graph, out, board):
     if(not isA):
       neighbor_node_num = current_node - 1
       #print(f"Adding Edge left : [{current_node}]-->[{neighbor_node_num}]")
-      if(hf.node_hasPiece(neighbor_node_num, out, board) == True):
+      if(hf.node_hasPiece(neighbor_node_num, board) == True):
         graph.add_edge(current_node, neighbor_node_num, 100.5)
       else:
         graph.add_edge(current_node, neighbor_node_num, .5)

@@ -26,7 +26,7 @@ def testPrint():
     return
 
 # Input node int as number between 0 - 288 (i think 288)
-def node_hasPiece(nodeNum, cleaned_game_str, board):
+def node_hasPiece(nodeNum, board):
   # ensure inputted node spot is piece eligable
   # cleaned_str = cleaned_game_str #[::-1]
   if nodeNum // 17 % 2 == 1 and nodeNum % 17 % 2 == 1:

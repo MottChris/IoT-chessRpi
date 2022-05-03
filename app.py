@@ -27,6 +27,17 @@ auth = firebase.auth()
 
 db = firebase.database()
 
+## FIREBASE DATA 
+
+move_queue = []
+
+def stream_handler(message):
+    print(message)
+    move_queue.append(message["data"])
+    ## add message["data"] to move_queue
+
+my_stream = db.child("move").stream(stream_handler)
+
 # User sign in somehow #
 
 engine = chess.engine.SimpleEngine.popen_uci("/home/pi/Documents/stockfish_15_android_armv8/stockfish_15_src/src/stockfish")
@@ -42,145 +53,149 @@ def getNodeCoordsStr(node):
 
 board = chess.Board()
 
-for i in range(25):
-  
-  print(board)
-  legal_moves = str(board.legal_moves)
-  print(str(board.legal_moves))
-  # User Move
-  move = input("Make white move: ")
-  board.push_san(move)
-
-  # populate the graph with new game state
-  graph = djk.Graph()
-  cleaned_str = hf.clean_board_str(str(board))
-  print(f"cleaned str{cleaned_str}")
-  print(board)
-  
-  graph = Graph.create_graph(graph, cleaned_str, board)
-  #time.sleep(1)
-
-  engine_move = str(engine.play(board, limit).move)
-  print(f'engine UCI: {engine_move}')
-  # e4e5
-  # Determine if the move is attacking
-  fromNode, tonNode =  hf.UCItoNodeNums(engine_move)
-  parsed_square = chess.parse_square(engine_move[-2:])
-  if(board.piece_at(parsed_square)):
-      ## Ensure graph is up to date
-      print("GOING INTO MOVE")
-      ## Generate path for nonNode to jail zone
-      path = djk.find_path(graph, tonNode, 119)
-      ## call arduino serial commands to make the moves
-      command_bytes = str.encode("M" + getNodeCoordsStr(path.nodes[0]))
-      ser.write(command_bytes + b"\n")
-      print("M" + getNodeCoordsStr(path.nodes[0]))
-  
-      # wait for response from serial comm.
-      tdata = ser.read().decode("utf-8")  
-      data_left = ser.inWaiting()  # Get the number of characters ready to be read
-      tdata += ser.read(data_left).decode("utf-8")
-      print(f'{tdata} received.')
-
-      #ser.flush()
-      tdata = ""
-      # raise magnet up to the board
-      command_bytes = str.encode("S1")
-      ser.write(command_bytes + b"\n")
-      print("S1")
+## Change this to While True:
+while True:
+  if(len(move_queue) != 0):
     
-      # wait for response
-      tdata = ser.read().decode("utf-8")  
-      data_left = ser.inWaiting()  # Get the number of characters ready to be read
-      tdata += ser.read(data_left).decode("utf-8")
-      print(f'{tdata} received.')
-      tdata = ""
-      #ser.flush()
+    move = move_queue.pop(0)
+    print(board)
+    legal_moves = str(board.legal_moves)
+    print(str(board.legal_moves))
+    # User Move
+    #move = input("Make white move: ")
+    print(f'WHITE MADE MOVE: {move}')
+    board.push_san(move)
 
-      # loop through the rest of the moves
-      for node in path.nodes[1:]:
-          tdata = ""
-          print("M" + getNodeCoordsStr(node))
-          command_bytes = str.encode("M" + getNodeCoordsStr(node))
-          ser.write(command_bytes + b"\n")
+    # populate the graph with new game state
+    dijk_graph = djk.Graph()
+    cleaned_str = hf.clean_board_str(str(board))
+    print(f"cleaned str{cleaned_str}")
+    print(board)
+    
+    graph = Graph.create_graph(dijk_graph, board)
+    #time.sleep(1)
 
-          tdata = ser.read().decode("utf-8")  
-          data_left = ser.inWaiting()  # Get the number of characters ready to be read
-          tdata += ser.read(data_left).decode("utf-8")
-          print(f'{tdata} received.')
-          #ser.flush()
+    engine_move = str(engine.play(board, limit).move)
+    print(f'engine UCI: {engine_move}')
+    # e4e5
+    # Determine if the move is attacking
+    fromNode, tonNode =  hf.UCItoNodeNums(engine_move)
+    parsed_square = chess.parse_square(engine_move[-2:])
+    if(board.piece_at(parsed_square)):
+        ## Ensure graph is up to date
+        print("GOING INTO MOVE")
+        ## Generate path for nonNode to jail zone
+        path = djk.find_path(graph, tonNode, 119)
+        ## call arduino serial commands to make the moves
+        command_bytes = str.encode("M" + getNodeCoordsStr(path.nodes[0]))
+        ser.write(command_bytes + b"\n")
+        print("M" + getNodeCoordsStr(path.nodes[0]))
+    
+        # wait for response from serial comm.
+        tdata = ser.read().decode("utf-8")  
+        data_left = ser.inWaiting()  # Get the number of characters ready to be read
+        tdata += ser.read(data_left).decode("utf-8")
+        print(f'{tdata} received.')
 
-      print("S0")
-      command_bytes = str.encode("S0")
-      ser.write(command_bytes + b"\n")
+        #ser.flush()
+        tdata = ""
+        # raise magnet up to the board
+        command_bytes = str.encode("S1")
+        ser.write(command_bytes + b"\n")
+        print("S1")
+        
+        # wait for response
+        tdata = ser.read().decode("utf-8")  
+        data_left = ser.inWaiting()  # Get the number of characters ready to be read
+        tdata += ser.read(data_left).decode("utf-8")
+        print(f'{tdata} received.')
+        tdata = ""
+        #ser.flush()
 
-      tdata = ""
-      tdata = ser.read().decode("utf-8")  
-      data_left = ser.inWaiting()  # Get the number of characters ready to be read
-      tdata += ser.read(data_left).decode("utf-8")
-      print(f'{tdata} received.')
+        # loop through the rest of the moves
+        for node in path.nodes[1:]:
+            tdata = ""
+            print("M" + getNodeCoordsStr(node))
+            command_bytes = str.encode("M" + getNodeCoordsStr(node))
+            ser.write(command_bytes + b"\n")
+
+            tdata = ser.read().decode("utf-8")  
+            data_left = ser.inWaiting()  # Get the number of characters ready to be read
+            tdata += ser.read(data_left).decode("utf-8")
+            print(f'{tdata} received.')
+            #ser.flush()
+
+        print("S0")
+        command_bytes = str.encode("S0")
+        ser.write(command_bytes + b"\n")
+
+        tdata = ""
+        tdata = ser.read().decode("utf-8")  
+        data_left = ser.inWaiting()  # Get the number of characters ready to be read
+        tdata += ser.read(data_left).decode("utf-8")
+        print(f'{tdata} received.')
 
 
 
-  board.push_uci(engine_move)
+    board.push_uci(engine_move)
 
-  print(board)
-  #engine.quit()
-  # get node nums for the move
-  
-  # get proper nodes from engine move
-  fromNode, tonNode =  hf.UCItoNodeNums(engine_move)
+    print(board)
+    #engine.quit()
+    # get node nums for the move
+    
+    # get proper nodes from engine move
+    fromNode, tonNode =  hf.UCItoNodeNums(engine_move)
 
-  path = djk.find_path(graph, fromNode, tonNode)
-  print("PATH INFO:")
-  print(path)
-  print(path.nodes)
+    path = djk.find_path(graph, fromNode, tonNode)
+    print("PATH INFO:")
+    print(path)
+    print(path.nodes)
 
-  command_bytes = str.encode("M" + getNodeCoordsStr(path.nodes[0]))
-  ser.write(command_bytes + b"\n")
-  print("M" + getNodeCoordsStr(path.nodes[0]))
-  
-  # wait for response from serial comm.
-  tdata = ser.read().decode("utf-8")  
-  data_left = ser.inWaiting()  # Get the number of characters ready to be read
-  tdata += ser.read(data_left).decode("utf-8")
-  print(f'{tdata} received.')
+    command_bytes = str.encode("M" + getNodeCoordsStr(path.nodes[0]))
+    ser.write(command_bytes + b"\n")
+    print("M" + getNodeCoordsStr(path.nodes[0]))
+    
+    # wait for response from serial comm.
+    tdata = ser.read().decode("utf-8")  
+    data_left = ser.inWaiting()  # Get the number of characters ready to be read
+    tdata += ser.read(data_left).decode("utf-8")
+    print(f'{tdata} received.')
 
-  #ser.flush()
-  tdata = ""
-  # raise magnet up to the board
-  command_bytes = str.encode("S1")
-  ser.write(command_bytes + b"\n")
-  print("S1")
-  
-  # wait for response
-  tdata = ser.read().decode("utf-8")  
-  data_left = ser.inWaiting()  # Get the number of characters ready to be read
-  tdata += ser.read(data_left).decode("utf-8")
-  print(f'{tdata} received.')
-  tdata = ""
-  #ser.flush()
+    #ser.flush()
+    tdata = ""
+    # raise magnet up to the board
+    command_bytes = str.encode("S1")
+    ser.write(command_bytes + b"\n")
+    print("S1")
+    
+    # wait for response
+    tdata = ser.read().decode("utf-8")  
+    data_left = ser.inWaiting()  # Get the number of characters ready to be read
+    tdata += ser.read(data_left).decode("utf-8")
+    print(f'{tdata} received.')
+    tdata = ""
+    #ser.flush()
 
-  # loop through the rest of the moves
-  for node in path.nodes[1:]:
-      tdata = ""
-      print("M" + getNodeCoordsStr(node))
-      command_bytes = str.encode("M" + getNodeCoordsStr(node))
-      ser.write(command_bytes + b"\n")
+    # loop through the rest of the moves
+    for node in path.nodes[1:]:
+        tdata = ""
+        print("M" + getNodeCoordsStr(node))
+        command_bytes = str.encode("M" + getNodeCoordsStr(node))
+        ser.write(command_bytes + b"\n")
 
-      tdata = ser.read().decode("utf-8")  
-      data_left = ser.inWaiting()  # Get the number of characters ready to be read
-      tdata += ser.read(data_left).decode("utf-8")
-      print(f'{tdata} received.')
-      #ser.flush()
+        tdata = ser.read().decode("utf-8")  
+        data_left = ser.inWaiting()  # Get the number of characters ready to be read
+        tdata += ser.read(data_left).decode("utf-8")
+        print(f'{tdata} received.')
+        #ser.flush()
 
-  print("S0")
-  command_bytes = str.encode("S0")
-  ser.write(command_bytes + b"\n")
+    print("S0")
+    command_bytes = str.encode("S0")
+    ser.write(command_bytes + b"\n")
 
-  tdata = ""
-  tdata = ser.read().decode("utf-8")  
-  data_left = ser.inWaiting()  # Get the number of characters ready to be read
-  tdata += ser.read(data_left).decode("utf-8")
-  print(f'{tdata} received.')
-  #ser.flush()
+    tdata = ""
+    tdata = ser.read().decode("utf-8")  
+    data_left = ser.inWaiting()  # Get the number of characters ready to be read
+    tdata += ser.read(data_left).decode("utf-8")
+    print(f'{tdata} received.')
+    #ser.flush()
