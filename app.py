@@ -11,6 +11,24 @@ import serial
 import time
 
 
+## Firebase Config
+import pyrebase
+
+config = {
+    "apiKey" : "AIzaSyA-aoU16El2xsvxKyctepp2lr6Yj6wmbKA",
+    "authDomain" : "iot-final-project-7ea84.firebaseapp.com",
+    "databaseURL" : "https://iot-final-project-7ea84-default-rtdb.firebaseio.com/",
+    "storageBucket" : "iot-final-project-7ea84.appspot.com"
+}
+
+firebase = pyrebase.initialize_app(config)
+
+auth = firebase.auth()
+
+db = firebase.database()
+
+# User sign in somehow #
+
 engine = chess.engine.SimpleEngine.popen_uci("/home/pi/Documents/stockfish_15_android_armv8/stockfish_15_src/src/stockfish")
 limit = chess.engine.Limit(time = 2.0)
 
