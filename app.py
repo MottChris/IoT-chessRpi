@@ -10,7 +10,7 @@ import chess.engine
 import serial
 import time
 
-
+print("starting")
 ## Firebase Config
 import pyrebase
 
@@ -21,32 +21,39 @@ config = {
     "storageBucket" : "iot-final-project-7ea84.appspot.com"
 }
 
+print("init firebase")
 firebase = pyrebase.initialize_app(config)
 
 auth = firebase.auth()
 
 db = firebase.database()
-
+print("done firebase")
 ## FIREBASE DATA 
 
 move_queue = []
 
+print("handler")
 def stream_handler(message):
     print(message)
     move_queue.append(message["data"])
     ## add message["data"] to move_queue
 
+print("My stream")
 my_stream = db.child("move").stream(stream_handler)
-
+print("Done stream")
 # User sign in somehow #
 
+print("stockfish")
 engine = chess.engine.SimpleEngine.popen_uci("/home/pi/Documents/stockfish_15_android_armv8/stockfish_15_src/src/stockfish")
 limit = chess.engine.Limit(time = 2.0)
 
 # Arduino serial connection
+print("serial connection")
 if __name__ == '__main__':
  ser = serial.Serial('/dev/ttyACM0', 9600)
  ser.reset_input_buffer()
+
+print("done serial connection")
 
 def getNodeCoordsStr(node):
     return f'{node % 17},{node // 17}'
@@ -56,12 +63,15 @@ board = chess.Board()
 ## Change this to While True:
 while True:
   if(len(move_queue) != 0):
+    #print("move")
     
     move = move_queue.pop(0)
     print(board)
     legal_moves = str(board.legal_moves)
-    print(str(board.legal_moves))
-    # User Move
+    # s = str(board.legal_moves)
+    # s = s[s.find("(")+1:s.find(")")]
+    # # User Move
+    # db.update({"legal_moves": s})
     #move = input("Make white move: ")
     print(f'WHITE MADE MOVE: {move}')
     board.push_san(move)
@@ -199,3 +209,9 @@ while True:
     tdata += ser.read(data_left).decode("utf-8")
     print(f'{tdata} received.')
     #ser.flush()
+
+    legal_moves = str(board.legal_moves)
+    s = str(board.legal_moves)
+    s = s[s.find("(")+1:s.find(")")]
+    # User Move
+    db.update({"legal_moves": s})
